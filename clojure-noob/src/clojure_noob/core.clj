@@ -21,40 +21,31 @@
                              {:name "left-achilles" :size 1}
                              {:name "left-foot" :size 2}])
 
+(def part-positions ["right-"
+                     "top-"
+                     "bottom-"
+                     "back-"
+                     "front-"])
 
-(defn matching-part
-  "Returns the matching body part to the one given"
-  [part]
-  {:name (clojure.string/replace (:name part) #"^left-" "right-")
+(defn positioned-part
+  "Returns `multiplier` matching body parts to the one given"
+  [position part]
+  {:name (clojure.string/replace (:name part) #"^left-" position)
    :size (:size part)})
 
-(defn symmetrize-body-parts1
-  "Expects a seq of parts that have :name and :size"
-  [asym-parts]
-  (loop [remaining-parts asym-parts
-         sym-parts []]
-    (if (empty? remaining-parts)
-      sym-parts
-      (let [[part & remaining] remaining-parts]
-         (recur remaining
-                (into sym-parts
-                      (set [part (matching-part part)])))))))
+(defn multiply-part [multiplier part]
+  (let [positions (take multiplier part-positions)]
+    (map (fn [position] (positioned-part position part)) positions)))
 
-(defn symmetrize-body-parts2 [asym-parts]
-  (vec (set (into asym-parts
-                  (map matching-part asym-parts)))))
-
-(defn part-reducer [sym-parts part]
-  (into sym-parts (set [part (matching-part part)])))
-
-(defn symmetrize-body-parts3 [asym-parts]
-  (reduce part-reducer [] asym-parts))
-
-(defn symmetrize-body-parts [asym-parts]
+(defn multiply-body-parts [multiplier asym-parts]
   (reduce (fn [sym-parts part]
-            (into sym-parts (set [part (matching-part part)])))
+            (into sym-parts (set (conj (multiply-part multiplier part)))))
           []
           asym-parts))
+
+
+(defn symmetrize-body-parts [asym-parts]
+  (multiply-body-parts 2 asym-parts))
 
 
 (defn swole [body {:keys [name size]}]
@@ -69,51 +60,15 @@
                              body)]
     (first (shuffle swole-body))))
 
+(comment "EXERCISES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-(defn hit2
-  [asym-body-parts]
-  (let [body (symmetrize-body-parts asym-hobbit-body-parts)
-        body-size (reduce + (map :size body))
-        target (rand body-size)]
-    (reduce (fn [remaining-target part]
-              (let [part-size (:size part)]
-                (if (<= remaining-target part-size)
-                  (reduced part)
-                  (- remaining-target part-size))))
-            target
-            body)))
-
-(defn hit3
-  [asym-body-parts]
-  (let [body (symmetrize-body-parts asym-hobbit-body-parts)
-        body-size (reduce + (map :size body))
-        target (rand body-size)]
-    (loop [[part & remaining] body
-            accumulated-size (:size part)]
-           (if (> accumulated-size target)
-             part
-             (recur remaining (+ accumulated-size (:size (first remaining))))))))
+(defn mapset
+  [fun coll]
+  (set (map fun coll)))
 
 
-
-
-(defn handle-group [[group-name group-contents]]
-  (let [num-hits (count group-contents)
-        size (:size (first group-contents))
-        hits-per-size (/ size num-hits)]
-    [group-name num-hits size hits-per-size]))
-
-
-(defn test-hits
-  [hit-fn]
-  (let [hits (take 100000 (repeatedly #(hit-fn asym-hobbit-body-parts)))
-        groups (group-by :name hits)
-        group-results (map handle-group groups)]
-    (println (map float (map last group-results)))))
-
-
-
-
+(defn dec-maker [no]
+  (fn [no2] (- no2 no)))
 
 
 
