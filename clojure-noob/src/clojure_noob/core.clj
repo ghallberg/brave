@@ -77,3 +77,86 @@
   "I don't do a whole lot ... yet."
   [& args]
   (println "I'm a little teapot!"))
+
+
+ (map + [1 2 3] [4 5 3] [100 100 011])
+
+
+(def sum #(reduce + %))
+(def avg #(/ (sum %) (count %)))
+
+(defn stats
+  [numbers]
+  (map #(% numbers) [sum count avg]))
+
+
+(reduce (fn [new-map [key val]]
+          (if (> val 4)
+            (assoc new-map key val)
+            new-map))
+        {}
+        {:four 4 :five 5 :six 6 :seven 7 :one 1 :two 2 :three 3 :fourfour 4.4 :twotwo 2.2 :threenine 3.9})
+
+
+
+(defn redmap [fun coll]
+  (reduce (fn [out in]
+            (conj out (fun in)))
+          []
+          coll))
+
+(defn even-numbers
+  ([] (even-numbers 0))
+  ([n] (cons n (lazy-seq (even-numbers (+ n 2))))))
+
+(defn one-comp
+  [f]
+  (fn [& args]
+    (apply f args)))
+
+(defn two-comp
+  [f g]
+  (fn [& args]
+    (f (apply (one-comp g) args))))
+
+(defn three-comp
+  [f g h]
+  (fn [& args]
+    (f (apply (two-comp g h) args))))
+
+(defn my-comp
+  ([] identity)
+  ([f] f)
+  ([f & more-fs]
+   (fn [& args]
+     (f (apply (apply my-comp more-fs) args)))))
+
+
+(defn sum
+  ([vals]
+   (sum vals 0))
+  ([vals acc]
+   (if (empty? vals)
+     acc
+     (recur (rest vals) (+ (first vals) acc)))))
+
+
+(defn tri*
+  ([] (tri* 0 1))
+  ([sum n]
+   (let [new-sum (+ sum n)]
+     (cons new-sum (lazy-seq (tri* new-sum (inc n)))))))
+
+(def tri (tri*))
+
+(defn triangular?
+  [cand]
+  (= (last (take-while #(<= % cand) tri)) cand))
+
+(defn row-tri
+  [row-no]
+  (nth tri (- row-no 1)))
+
+(defn row-tri2
+  [row-no]
+  (last (take row-no tri)))
